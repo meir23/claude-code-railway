@@ -35,16 +35,29 @@ RUN curl -LO https://github.com/BurntSushi/ripgrep/releases/download/14.1.1/ripg
     && rm ripgrep_14.1.1-1_amd64.deb
 
 # Install Ruby 3.3.x (latest stable) via rbenv for better version management
+# התקנת Ruby וכל התלויות
 RUN apt-get update \
     && apt-get install -y autoconf bison build-essential libssl-dev libyaml-dev \
-        libreadline-dev zlib1g-dev libncurses5-dev libffi-dev libgdbm-dev \
+        libreadline-dev zlib1g-dev libncurses-dev libffi-dev libgdbm-dev \
     && git clone https://github.com/rbenv/rbenv.git /opt/rbenv \
     && git clone https://github.com/rbenv/ruby-build.git /opt/rbenv/plugins/ruby-build \
-    && /opt/rbenv/bin/rbenv install 3.3.6 \
-    && /opt/rbenv/bin/rbenv global 3.3.6 \
+    \
+    # --- התיקון מתחיל כאן ---
+    # הוספת rbenv ל-PATH ואתחול הסביבה *עבור הסשן הנוכחי*
+    && export PATH="/opt/rbenv/bin:$PATH" \
+    && eval "$(/opt/rbenv/bin/rbenv init -)" \
+    \
+    # עכשיו הפקודות יפעלו
+    && rbenv install 3.3.6 \
+    && rbenv global 3.3.6 \
+    # --- התיקון נגמר ---
+    \
+    # הגדרת הסביבה עבור סשנים עתידיים (כמו קודם)
     && echo 'export PATH="/opt/rbenv/bin:/opt/rbenv/shims:$PATH"' >> /etc/profile.d/rbenv.sh \
     && echo 'eval "$(rbenv init -)"' >> /etc/profile.d/rbenv.sh \
     && chmod +x /etc/profile.d/rbenv.sh \
+    \
+    # התקנת rails וניקוי
     && /opt/rbenv/shims/gem install rails bundler \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
