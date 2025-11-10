@@ -4,7 +4,7 @@ FROM ubuntu:24.04
 # Remove it to free up UID/GID 1000 for our custom user
 RUN userdel -r ubuntu 2>/dev/null || true
 
-# Install system dependencies and SSH server
+# Install system dependencies, SSH server, Python, and Git
 RUN apt-get update \
     && apt-get install -y \
         iproute2 iputils-ping openssh-server telnet sudo \
@@ -34,45 +34,10 @@ RUN curl -LO https://github.com/BurntSushi/ripgrep/releases/download/14.1.1/ripg
     && dpkg -i ripgrep_14.1.1-1_amd64.deb \
     && rm ripgrep_14.1.1-1_amd64.deb
 
-# Install Ruby 3.3.x (latest stable) via rbenv for better version management
-# התקנת Ruby וכל התלויות
-RUN apt-get update \
-    && apt-get install -y autoconf bison build-essential libssl-dev libyaml-dev \
-        libreadline-dev zlib1g-dev libncurses-dev libffi-dev libgdbm-dev \
-    && git clone https://github.com/rbenv/rbenv.git /opt/rbenv \
-    && git clone https://github.com/rbenv/ruby-build.git /opt/rbenv/plugins/ruby-build \
-    \
-    # --- התיקון מתחיל כאן ---
-    # הוספת rbenv ל-PATH ואתחול הסביבה *עבור הסשן הנוכחי*
-    && export PATH="/opt/rbenv/bin:$PATH" \
-    && eval "$(/opt/rbenv/bin/rbenv init -)" \
-    \
-    # עכשיו הפקודות יפעלו
-    && rbenv install 3.3.6 \
-    && rbenv global 3.3.6 \
-    # --- התיקון נגמר ---
-    \
-    # הגדרת הסביבה עבור סשנים עתידיים (כמו קודם)
-    && echo 'export PATH="/opt/rbenv/bin:/opt/rbenv/shims:$PATH"' >> /etc/profile.d/rbenv.sh \
-    && echo 'eval "$(rbenv init -)"' >> /etc/profile.d/rbenv.sh \
-    && chmod +x /etc/profile.d/rbenv.sh \
-    \
-    # התקנת rails וניקוי
-    && /opt/rbenv/shims/gem install rails bundler \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+# --- Ruby and GitHub CLI installation sections have been removed ---
 
-# Install GitHub CLI
-RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-    && chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-    && apt-get update \
-    && apt-get install -y gh \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install Railway CLI (set PATH for rbenv first)
-RUN export PATH="/opt/rbenv/bin:/opt/rbenv/shims:$PATH" && npm install -g @railway/cli
+# Install Railway CLI
+RUN npm install -g @railway/cli
 
 # Copy ssh user config to configure user's password and authorized keys
 COPY ssh-user-config.sh /usr/local/bin/
