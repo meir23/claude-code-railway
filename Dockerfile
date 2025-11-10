@@ -45,6 +45,16 @@ COPY setup-dev-tools.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/ssh-user-config.sh \
     && chmod +x /usr/local/bin/setup-dev-tools.sh
 
+# Create user sameir2 with UID/GID 1000 (ubuntu user was already removed)
+RUN useradd -m -u 1000 -s /bin/bash sameir2 \
+    && usermod -aG sudo sameir2 \
+    && mkdir -p /home/sameir2/code-project \
+    && chown -R sameir2:sameir2 /home/sameir2
+
+# Copy all project files to code-project (excluding items in .dockerignore)
+# This includes dev/, and any other directories you add in the future
+COPY --chown=sameir2:sameir2 . /home/sameir2/code-project/
+
 # Disable all MOTD messages for clean SSH login
 RUN rm -f /etc/motd \
     && rm -f /etc/update-motd.d/* \
